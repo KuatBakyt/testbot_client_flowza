@@ -76,7 +76,7 @@ class DjangoHTTPTests(unittest.TestCase):
         return CRM(Config('not-used',self.base,phone,'test-password-only'))
 
     def payload(self):
-        start=datetime.now(timezone.utc)+timedelta(days=3)
+        start=(datetime.now(timezone.utc)+timedelta(days=3)).replace(hour=6,minute=0,second=0,microsecond=0)
         return {'request_id':str(uuid4()),'client':{'name':'Әлия','phone':'+77012345678','external_id':'telegram:123:'+str(uuid4())},
                 'order':{'specialization':str(self.spec.pk),'title':'Сантехника','description':'Кран ағып тұр',
                          'address':'Алматы, Абая 10','district':'Бостандыкский',
@@ -136,7 +136,7 @@ class DjangoHTTPTests(unittest.TestCase):
             h.engine=Dialogue(h.store,h.crm,h.config,123)
             h.text('/start');h.click('lang:kk');h.click('continue');h.text('Әлия');h.text('+77012345678')
             h.click('service:0');h.text('Кран ағып тұр');h.text('Алматы, Абая 10');h.click('district:0')
-            local=(datetime.now(timezone.utc)+timedelta(days=5)).astimezone(h.engine.zone)
+            local=(datetime.now(timezone.utc)+timedelta(days=5)).astimezone(h.engine.zone).replace(hour=10,minute=0)
             h.text(local.strftime('%d.%m.%Y %H:%M'));h.click('duration:1');h.click('send')
             self.assertEqual(h.state()['step'],'done')
             order=Order.objects.get(pk=h.state()['result']['id'])

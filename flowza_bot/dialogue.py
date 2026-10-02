@@ -351,8 +351,9 @@ class Dialogue:
             if result:
                 # Erase unnecessary PII after successful delivery; keep language and receipt.
                 s = {'lang': s['lang'], 'step': 'done', 'revision': s['revision'], 'fields': {}, 'result': result}
-            elif failure.status == 409 and failure.data.get('code') == 'schedule_conflict':
-                s.pop('payload'); s.update(step='date', editing=True); notice = tr(s, 'conflict')
+            elif failure.status == 409 and failure.data.get('code') in {'schedule_conflict', 'outside_working_hours'}:
+                s.pop('payload'); s.update(step='date', editing=True)
+                notice = tr(s, 'outside_working_hours' if failure.data.get('code') == 'outside_working_hours' else 'conflict')
             elif failure.status == 400:
                 s.pop('payload'); s['step'] = 'review'; notice = tr(s, 'rejected')
             elif failure.status in {401, 403, 404, 405}:
@@ -367,7 +368,7 @@ class Dialogue:
 
     @staticmethod
     def safe_code(code):
-        return code if code in {'schedule_conflict', 'idempotency_conflict', 'validation_error', 'master_unavailable'} else 'error'
+        return code if code in {'schedule_conflict', 'outside_working_hours', 'idempotency_conflict', 'validation_error', 'master_unavailable'} else 'error'
 
 
 class InputError(Exception):

@@ -11,6 +11,19 @@ class DialogueTests(unittest.TestCase):
     def setUp(self):self.h = Harness()
     def tearDown(self):self.h.close()
 
+    def test_outside_working_hours_returns_to_date_both_languages(self):
+        for lang, user in [('ru', 100), ('kk', 200)]:
+            self.h.form(lang, user)
+            self.h.crm.error = HTTPError(409, {'code': 'outside_working_hours'})
+            self.h.click('send', user)
+            state = self.h.state(user)
+            self.assertEqual(state['step'], 'date')
+            self.assertNotIn('payload', state)
+            self.h.crm.error = None
+            self.h.text('06.10.2026 10:00', user)
+            self.h.click('send', user)
+            self.assertEqual(self.h.state(user)['step'], 'done')
+
     def test_complete_both_languages_and_utc(self):
         for lang,user in [('ru',100),('kk',200)]:
             with self.subTest(lang=lang):
