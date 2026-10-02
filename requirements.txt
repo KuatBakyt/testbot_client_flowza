@@ -1,0 +1,2 @@
+# ZoneInfo database for Windows; bot HTTP and storage use the Python standard library.
+tzdata>=2025.2,<2027
