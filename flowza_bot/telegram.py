@@ -1,3 +1,4 @@
+import logging
 from .http import json_request, HTTPError
 
 
@@ -22,6 +23,10 @@ class Telegram:
                 self.call(item['method'], item['payload'])
             except HTTPError as exc:
                 # A blocked recipient or expired callback must not stop other clients.
+                if item.get('kind') == 'master_notice' and exc.status in (400, 403):
+                    logging.warning('Master notification could not be delivered (status=%s); check chat ID, /start and website URL', exc.status)
+                    store.sent(row_id)
+                    continue
                 if exc.status == 403 or (exc.status == 400 and item['method'] == 'answerCallbackQuery'):
                     store.sent(row_id)
                     continue

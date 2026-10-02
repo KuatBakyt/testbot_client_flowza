@@ -12,6 +12,7 @@ STEPS = ['consent', 'name', 'phone', 'service', 'description', 'address', 'distr
 FIELDS = ['name', 'phone', 'service', 'description', 'address', 'district', 'date', 'duration']
 LIMITS = {'name': 150, 'description': 2000, 'address': 255, 'district': 100}
 LOG = logging.getLogger(__name__)
+KAZAKH_DISTRICTS = {'Алатауский': 'Алатау', 'Алмалинский': 'Алмалы', 'Ауэзовский': 'Әуезов', 'Бостандыкский': 'Бостандық', 'Жетысуский': 'Жетісу', 'Медеуский': 'Медеу', 'Наурызбайский': 'Наурызбай', 'Турксибский': 'Түрксіб'}
 
 
 def normalize_phone(value):
@@ -104,7 +105,7 @@ class Dialogue:
         self.message(chat, text, self.buttons(s, rows))
 
     def district_label(self, name, lang):
-        return self.labels.get('districts', {}).get(name, {}).get(lang) or name
+        return self.labels.get('districts', {}).get(name, {}).get(lang) or (KAZAKH_DISTRICTS.get(name) if lang == 'kk' else None) or name
 
     def summary(self, s):
         f = s['fields']
@@ -187,6 +188,10 @@ class Dialogue:
                     self.store.acknowledge(update_id)
                     return
             text = msg.get('text', '').strip() if not query else ''
+            if text.split('@')[0] == '/myid':
+                self.message(chat, f'Telegram Chat ID: {chat}\nMASTER_TELEGRAM_CHAT_ID={chat}')
+                self.store.acknowledge(update_id)
+                return
             if text.startswith('/'):
                 command = text.split()[0].split('@')[0]
                 action = {'/start': 'start', '/new': 'new', '/language': 'language',

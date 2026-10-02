@@ -13,6 +13,7 @@ class Store:
             CREATE TABLE IF NOT EXISTS sessions (user_id INTEGER PRIMARY KEY, body TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS processed (id INTEGER PRIMARY KEY);
+            CREATE TABLE IF NOT EXISTS master_notifications (id TEXT PRIMARY KEY);
             CREATE TABLE IF NOT EXISTS outbox (id INTEGER PRIMARY KEY, body TEXT NOT NULL);
         ''')
         self.db.commit()

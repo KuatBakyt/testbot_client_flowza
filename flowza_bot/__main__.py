@@ -11,6 +11,7 @@ from .dialogue import Dialogue
 from .http import HTTPError
 from .storage import Store, InstanceLock
 from .telegram import Telegram
+from .notifications import MasterNotifications
 
 
 def main():
@@ -34,6 +35,18 @@ def main():
             else:
                 raise ValueError('Webhook is enabled. Run with --reset-webhook to use polling.')
         print('Telegram OK; MASTER account OK; services OK; bot/orders endpoint OK.')
+        if config.master_chat_id:
+            try:
+                recipient = telegram.call('getChat', {'chat_id': config.master_chat_id})
+            except HTTPError as exc:
+                if exc.status in (400, 403, 404):
+                    raise ValueError('Master chat is unavailable: ask master to send /start and /myid to this bot, then check MASTER_TELEGRAM_CHAT_ID') from None
+                raise
+            if recipient.get('type') != 'private':
+                raise ValueError('Master notifications require a private chat; ask master to send /start')
+            print('Master Telegram chat OK; notification URL configured.')
+        else:
+            print('Master notifications disabled: set MASTER_TELEGRAM_CHAT_ID and CRM_WEB_URL.')
         if args.check:
             return 0
         labels = {}
@@ -52,15 +65,18 @@ def main():
         store = Store(config.state_path)
         store.bind(identity['id'], catalog['master_id'])
         engine = Dialogue(store, crm, config, identity['id'], labels=labels)
+        notifications = MasterNotifications(store, crm, config)
         print('Бот запущен / Бот іске қосылды. Stop: Ctrl+C.')
         delay = 1
         while True:
             try:
+                notifications.poll()
                 telegram.drain(store)
                 updates = telegram.updates(int(store.meta('offset') or 0))
                 for update in updates:
                     engine.process(update)
-                    telegram.drain(store)
+                notifications.poll()
+                telegram.drain(store)
                 delay = 1
             except HTTPError as exc:
                 logging.warning('Connection status=%s; retrying', exc.status)

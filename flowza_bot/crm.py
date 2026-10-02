@@ -66,7 +66,7 @@ class CRM:
         specs = [s for s in results if s['id'] in ids and s.get('is_active', True)]
         if not specs:
             raise HTTPError(409, {'code': 'no_services'})
-        return {'master_id': profile['id'], 'specs': specs, 'districts': profile.get('districts', []),
+        return {'master_id': profile['id'], 'specs': specs, 'districts': profile.get('service_districts', profile.get('districts', [])),
                 'city': profile.get('city', '')}
 
     def check_endpoint(self):

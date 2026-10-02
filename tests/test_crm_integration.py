@@ -142,3 +142,21 @@ class DjangoHTTPTests(unittest.TestCase):
             order=Order.objects.get(pk=h.state()['result']['id'])
             self.assertEqual(order.master_id,self.master.pk);self.assertEqual(order.description,'Кран ағып тұр')
         finally:h.close()
+
+    def test_master_notice_reads_real_crm_and_is_queued_once(self):
+        from dataclasses import replace
+        from flowza_bot.notifications import MasterNotifications
+        h = Harness(self.client())
+        try:
+            config = replace(h.config, master_chat_id=200, web_url='https://crm.example.test')
+            engine = MasterNotifications(h.store, h.crm, config)
+            result = h.crm.submit(self.payload())
+            engine.poll()
+            engine.poll()
+            notices = [item for _, item in h.store.pending() if item.get('kind') == 'master_notice']
+            self.assertEqual(len(notices), 1)
+            self.assertIn(result['id'], notices[0]['payload']['text'])
+            self.assertNotIn('Әлия', notices[0]['payload']['text'])
+            self.assertEqual(notices[0]['payload']['chat_id'], 200)
+        finally:
+            h.close()
