@@ -35,7 +35,9 @@ class DjangoHTTPTests(unittest.TestCase):
         for key in dir(test_settings):
             if key.isupper():setattr(settings,key,getattr(test_settings,key))
         settings.DATABASES={'default':{'ENGINE':'django.db.backends.sqlite3','NAME':cls.temp.name+'/crm.sqlite3'}}
-        settings.INSTALLED_APPS=[*settings.INSTALLED_APPS,'flowza_bot_api']
+        settings.INSTALLED_APPS=list(settings.INSTALLED_APPS)
+        if 'flowza_bot_api' not in settings.INSTALLED_APPS:
+            settings.INSTALLED_APPS.append('flowza_bot_api')
         settings.ROOT_URLCONF='flowza_bot_smoke_urls'
         settings.ALLOWED_HOSTS=['localhost','127.0.0.1','testserver']
         sys.modules[settings.__name__]=settings
